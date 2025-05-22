@@ -16,6 +16,8 @@ using UnityEngine.Networking;
 using R2API;
 using RoR2.Skills;
 using RoR2.Projectile;
+using EntityStates.ChildMonster;
+using RoR2.Audio;
 
 namespace ChildTweaks
 {
@@ -30,7 +32,10 @@ namespace ChildTweaks
     internal static Main Instance { get; private set; }
     public static string PluginDirectory { get; private set; }
     private const BindingFlags allFlags = (BindingFlags)(-1);
-
+    private GameObject sparkProjectile = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildTrackingSparkBall.prefab").WaitForCompletion();
+    private GameObject sparkProjectileGhost = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildTrackingSparkBallGhost.prefab").WaitForCompletion();
+    private SpawnCard spawnCard = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC2/Child/cscChild.asset").WaitForCompletion();
+    public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
     public void Awake()
     {
       Instance = this;
@@ -38,7 +43,42 @@ namespace ChildTweaks
       Stopwatch stopwatch = Stopwatch.StartNew();
 
       Log.Init(Logger);
+      lsdSparkProjectile.startSoundName = "Play_spark_projectile_loop";
+      lsdSparkProjectile.stopSoundName = "Stop_spark_projectile_loop";
+
+      sparkProjectile.GetComponent<ProjectileController>().flightSoundLoop = lsdSparkProjectile;
+      Transform scaler = sparkProjectileGhost.transform.GetChild(0);
+      Destroy(scaler.GetComponent<ObjectScaleCurve>());
+      Destroy(scaler.GetComponent<ObjectScaleCurve>());
+      Destroy(scaler.GetComponent<ObjectTransformCurve>());
+
+      // Child Credit Cost 35
+      // Lemurian Credit Cost 11
+      // Stop_spark_projectile_loop
+      // Play_spark_projectile_loop
+
       /*
+      4 skill drivers total
+      1 "Frolic" secondary requiredSkill
+      2 "RunAway"
+      3 "FireSparkBall" primary
+      4 "PathFromAfar"
+
+      Projectile Info
+      ChildTrackingSparkBall
+      ProjectileSimple enableVelocityOverLifetime = false updateAfterFiring = false (maybe) desiredForwardSpeed = 17 (current)
+      ProjectileSteerTowardsTarget rotationSpeed = 90 (current)
+
+      ProjectileGhost
+      GetChild(0) or MoonMesh
+      ObjectScaleCurve x2
+      ObjectTransformCurve
+
+      ChildMonsterController
+
+      Play_child_attack1_chargeUp
+
+
       AISkillDriver[] skillDrivers = scorchlingMaster.GetComponents<AISkillDriver>();
       foreach (AISkillDriver skillDriver in skillDrivers)
       {
