@@ -35,7 +35,13 @@ namespace ChildTweaks
     private GameObject sparkProjectile = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildTrackingSparkBall.prefab").WaitForCompletion();
     private GameObject sparkProjectileGhost = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildTrackingSparkBallGhost.prefab").WaitForCompletion();
     private SpawnCard spawnCard = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC2/Child/cscChild.asset").WaitForCompletion();
+    private GameObject childMaster = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildMaster.prefab").WaitForCompletion();
     public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
+    // RoR2/DLC2/Child/MuzzleflashFrolic.prefab
+    // RoR2/DLC2/Child/FrolicTeleportVFX.prefab
+    // RoR2/DLC2/Child/FrolicProjectileImpactVFX.prefab
+    private SkillDef frolicSkill = Addressables.LoadAssetAsync<SkillDef>("RoR2/DLC2/Child/ChildBodyFrolic.asset").WaitForCompletion();
+    public static GameObject meleeEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/MuzzleflashFrolic.prefab").WaitForCompletion();
     public void Awake()
     {
       Instance = this;
@@ -43,6 +49,11 @@ namespace ChildTweaks
       Stopwatch stopwatch = Stopwatch.StartNew();
 
       Log.Init(Logger);
+
+      ContentAddition.AddEntityState<FrolicAttack>(out _);
+
+      frolicSkill.activationState = new SerializableEntityStateType(typeof(FrolicAttack));
+
       lsdSparkProjectile.startSoundName = "Play_spark_projectile_loop";
       lsdSparkProjectile.stopSoundName = "Stop_spark_projectile_loop";
 
@@ -60,6 +71,7 @@ namespace ChildTweaks
       /*
       4 skill drivers total
       1 "Frolic" secondary requiredSkill
+
       2 "RunAway"
       3 "FireSparkBall" primary
       4 "PathFromAfar"
@@ -79,21 +91,46 @@ namespace ChildTweaks
       Play_child_attack1_chargeUp
 
 
-      AISkillDriver[] skillDrivers = scorchlingMaster.GetComponents<AISkillDriver>();
+      */
+      AISkillDriver[] skillDrivers = childMaster.GetComponents<AISkillDriver>();
       foreach (AISkillDriver skillDriver in skillDrivers)
       {
-        if (skillDriver.customName == "ChaseOffNodegraphClose" || skillDriver.customName == "FollowNodeGraphToTarget")
+        if (skillDriver.customName == "RunAway")
         {
-          GameObject.Destroy(skillDriver);
+          skillDriver.maxDistance = 20f; // 30 orig
+          skillDriver.movementType = AISkillDriver.MovementType.ChaseMoveTarget;
         }
-        if (skillDriver.customName == "ChaseOffNodegraph")
+        if (skillDriver.customName == "FireSparkBall")
         {
+          skillDriver.maxDistance = 50f; // 37 orig
+          skillDriver.minDistance = 15f; // 25 orig
+        }
+        if (skillDriver.customName == "PathFromAfar")
+        {
+          skillDriver.movementType = AISkillDriver.MovementType.ChaseMoveTarget;
+          skillDriver.minDistance = 0f; // 35 orig
+          skillDriver.shouldSprint = true;
         }
       }
-      */
+      SetAddressableEntityStateField("RoR2/DLC2/Child/EntityStates.ChildMonster.FireTrackingSparkBall.asset", "bombDamageCoefficient", "3");
+      // bombDamageCoefficient 6
 
       stopwatch.Stop();
       Log.Info_NoCallerPrefix($"Initialized in {stopwatch.Elapsed.TotalSeconds:F2} seconds");
+    }
+
+    public static bool SetAddressableEntityStateField(string fullEntityStatePath, string fieldName, string value)
+    {
+      EntityStateConfiguration esc = Addressables.LoadAssetAsync<EntityStateConfiguration>(fullEntityStatePath).WaitForCompletion();
+      for (int i = 0; i < esc.serializedFieldsCollection.serializedFields.Length; i++)
+      {
+        if (esc.serializedFieldsCollection.serializedFields[i].fieldName == fieldName)
+        {
+          esc.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue = value;
+          return true;
+        }
+      }
+      return false;
     }
 
     // self is just for being able to call self.OnEnter() inside hooks.
