@@ -37,11 +37,13 @@ namespace ChildTweaks
     private SpawnCard spawnCard = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC2/Child/cscChild.asset").WaitForCompletion();
     private GameObject childMaster = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildMaster.prefab").WaitForCompletion();
     public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
+    private GameObject childBody = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildBody.prefab").WaitForCompletion();
     // RoR2/DLC2/Child/MuzzleflashFrolic.prefab
     // RoR2/DLC2/Child/FrolicTeleportVFX.prefab
     // RoR2/DLC2/Child/FrolicProjectileImpactVFX.prefab
     private SkillDef frolicSkill = Addressables.LoadAssetAsync<SkillDef>("RoR2/DLC2/Child/ChildBodyFrolic.asset").WaitForCompletion();
     public static GameObject meleeEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/MuzzleflashFrolic.prefab").WaitForCompletion();
+    private SkillFamily skillFamily = Addressables.LoadAssetAsync<SkillFamily>("RoR2/DLC2/Child/ChildBodySecondaryFamily.asset").WaitForCompletion();
     public void Awake()
     {
       Instance = this;
@@ -51,6 +53,9 @@ namespace ChildTweaks
       Log.Init(Logger);
 
       ContentAddition.AddEntityState<FrolicAttack>(out _);
+      GenericSkill skill = childBody.AddComponent<GenericSkill>();
+      skill._skillFamily = skillFamily;
+      childBody.GetComponent<SkillLocator>().secondary = skill;
 
       frolicSkill.activationState = new SerializableEntityStateType(typeof(FrolicAttack));
 
