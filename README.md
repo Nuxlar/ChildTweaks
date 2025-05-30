@@ -1,11 +1,30 @@
 # Child Tweaks
 
-### Reworks burrow/breach
+## Reworks Frolic (teleport)
 
-- Wurm no longer navigates underground
-- Burrow is now immediately followed up by a Breach
-- After burrowing, the wurm teleports in an area around it's target
-- After a delay, the wurm breaches in the designated spot
-- Burrow has a cooldown
+- Frolic is now directional (think Huntress' long blink but shorter range)
+- Frolic is now a skill (this is more internal, but it's more predictable)
+- Frolic is no longer triggered when taking damage
+- Frolic no longer adds invincibility
 
-<img src="https://s14.gifyu.com/images/bsjxg.gif" width="600" height="300" />
+## Tweaks Spark Ball (projectile)
+
+- Spark Ball damage is reduced 600% -> 200%
+- Spark Ball no longer grows visually, size remains consistent
+- Spark Ball no longer slows down, speed remains consistent
+- Spark Ball now has custom flight SFX for better sound cues
+- Reduced Spark Ball spawn distance (spawns closer to Child to prevent unfair hits)
+- Increased Spark Ball max activation distance 37 -> 45 (now activates ability farther away)
+- Decresed Spark Ball min activation distance 25 -> 15 (now activates ability closer to prevent constant running away)
+
+<img src="https://s14.gifyu.com/images/bxwJK.gif" width="600" height="300" />
+
+## General Tweaks
+
+- Child spawn cost reduced 35 -> 20 (blind pests are 15 for reference)
+- Slight AI tweaks for more sprinting and navigation
+- Adds EnemyImportance as a dependency to prevent instances of Child blinking into walls or the floor
+
+## Credits
+
+Projectile SFX (Edited) [Bits FX by InSintesi](https://freesound.org/s/792214/) License: Attribution NonCommercial 4.0

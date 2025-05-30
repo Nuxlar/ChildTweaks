@@ -4,6 +4,7 @@
 	"website_url": "",
 	"description": "Tweaks to the Child Enemy",
 	"dependencies": [
-		"RiskofThunder-R2API_ContentManagement-1.0.9"
+		"RiskofThunder-R2API_ContentManagement-1.0.9",
+		"pseudopulse-EnemyImportance-1.0.0"
 	]
 }

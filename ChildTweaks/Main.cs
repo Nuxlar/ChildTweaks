@@ -1,22 +1,12 @@
 using BepInEx;
 using EntityStates;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 using RoR2;
 using RoR2.CharacterAI;
-using RoR2.Navigation;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Networking;
 using R2API;
 using RoR2.Skills;
 using RoR2.Projectile;
-using EntityStates.ChildMonster;
 using RoR2.Audio;
 
 namespace ChildTweaks
@@ -31,33 +21,29 @@ namespace ChildTweaks
 
     internal static Main Instance { get; private set; }
     public static string PluginDirectory { get; private set; }
-    private const BindingFlags allFlags = (BindingFlags)(-1);
     private GameObject sparkProjectile = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildTrackingSparkBall.prefab").WaitForCompletion();
     private GameObject sparkProjectileGhost = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildTrackingSparkBallGhost.prefab").WaitForCompletion();
     private SpawnCard spawnCard = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC2/Child/cscChild.asset").WaitForCompletion();
     private GameObject childMaster = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildMaster.prefab").WaitForCompletion();
     public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
+    public static GameObject teleportVFX = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/FrolicTeleportVFX.prefab").WaitForCompletion();
     private GameObject childBody = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/ChildBody.prefab").WaitForCompletion();
-    // RoR2/DLC2/Child/MuzzleflashFrolic.prefab
-    // RoR2/DLC2/Child/FrolicTeleportVFX.prefab
-    // RoR2/DLC2/Child/FrolicProjectileImpactVFX.prefab
-    private SkillDef frolicSkill = Addressables.LoadAssetAsync<SkillDef>("RoR2/DLC2/Child/ChildBodyFrolic.asset").WaitForCompletion();
+    public static Material destealthMat = Addressables.LoadAssetAsync<Material>("RoR2/Base/Parent/matParentDissolve.mat").WaitForCompletion();
+    private SkillDef skillDef = ScriptableObject.CreateInstance<SkillDef>();
     public static GameObject meleeEffectPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC2/Child/MuzzleflashFrolic.prefab").WaitForCompletion();
-    private SkillFamily skillFamily = Addressables.LoadAssetAsync<SkillFamily>("RoR2/DLC2/Child/ChildBodySecondaryFamily.asset").WaitForCompletion();
+
     public void Awake()
     {
       Instance = this;
 
-      Stopwatch stopwatch = Stopwatch.StartNew();
-
       Log.Init(Logger);
 
-      ContentAddition.AddEntityState<FrolicAttack>(out _);
-      GenericSkill skill = childBody.AddComponent<GenericSkill>();
-      skill._skillFamily = skillFamily;
-      childBody.GetComponent<SkillLocator>().secondary = skill;
+      CreateSkill();
 
-      frolicSkill.activationState = new SerializableEntityStateType(typeof(FrolicAttack));
+      ContentAddition.AddEntityState<ChildBlink>(out _);
+
+      // Reduces projectile spawn point distance
+      childBody.transform.GetChild(0).GetChild(0).GetChild(1).GetChild(2).position = new Vector3(0, 2.5f, 0);
 
       lsdSparkProjectile.startSoundName = "Play_spark_projectile_loop";
       lsdSparkProjectile.stopSoundName = "Stop_spark_projectile_loop";
@@ -67,61 +53,42 @@ namespace ChildTweaks
       Destroy(scaler.GetComponent<ObjectScaleCurve>());
       Destroy(scaler.GetComponent<ObjectScaleCurve>());
       Destroy(scaler.GetComponent<ObjectTransformCurve>());
+      ProjectileSimple projectileSimple = sparkProjectile.GetComponent<ProjectileSimple>();
+      projectileSimple.enableVelocityOverLifetime = false;
 
-      // Child Credit Cost 35
-      // Lemurian Credit Cost 11
-      // Stop_spark_projectile_loop
-      // Play_spark_projectile_loop
+      GameObject.Destroy(childBody.GetComponent<ChildMonsterController>());
+      GameObject.Destroy(childBody.GetComponent<SetStateOnHurt>());
 
-      /*
-      4 skill drivers total
-      1 "Frolic" secondary requiredSkill
+      spawnCard.directorCreditCost = 20; // 35
 
-      2 "RunAway"
-      3 "FireSparkBall" primary
-      4 "PathFromAfar"
-
-      Projectile Info
-      ChildTrackingSparkBall
-      ProjectileSimple enableVelocityOverLifetime = false updateAfterFiring = false (maybe) desiredForwardSpeed = 17 (current)
-      ProjectileSteerTowardsTarget rotationSpeed = 90 (current)
-
-      ProjectileGhost
-      GetChild(0) or MoonMesh
-      ObjectScaleCurve x2
-      ObjectTransformCurve
-
-      ChildMonsterController
-
-      Play_child_attack1_chargeUp
-
-
-      */
       AISkillDriver[] skillDrivers = childMaster.GetComponents<AISkillDriver>();
       foreach (AISkillDriver skillDriver in skillDrivers)
       {
+        if (skillDriver.customName == "Frolic")
+        {
+          skillDriver.movementType = AISkillDriver.MovementType.FleeMoveTarget;
+          skillDriver.aimType = AISkillDriver.AimType.MoveDirection;
+          skillDriver.shouldSprint = true;
+          skillDriver.requiredSkill = null;
+        }
         if (skillDriver.customName == "RunAway")
         {
           skillDriver.maxDistance = 20f; // 30 orig
-          skillDriver.movementType = AISkillDriver.MovementType.ChaseMoveTarget;
         }
         if (skillDriver.customName == "FireSparkBall")
         {
-          skillDriver.maxDistance = 50f; // 37 orig
+          skillDriver.maxDistance = 45; // 37 orig
           skillDriver.minDistance = 15f; // 25 orig
         }
         if (skillDriver.customName == "PathFromAfar")
         {
           skillDriver.movementType = AISkillDriver.MovementType.ChaseMoveTarget;
-          skillDriver.minDistance = 0f; // 35 orig
+          skillDriver.minDistance = 25f; // 35 orig
           skillDriver.shouldSprint = true;
         }
       }
-      SetAddressableEntityStateField("RoR2/DLC2/Child/EntityStates.ChildMonster.FireTrackingSparkBall.asset", "bombDamageCoefficient", "3");
+      SetAddressableEntityStateField("RoR2/DLC2/Child/EntityStates.ChildMonster.FireTrackingSparkBall.asset", "bombDamageCoefficient", "2");
       // bombDamageCoefficient 6
-
-      stopwatch.Stop();
-      Log.Info_NoCallerPrefix($"Initialized in {stopwatch.Elapsed.TotalSeconds:F2} seconds");
     }
 
     public static bool SetAddressableEntityStateField(string fullEntityStatePath, string fieldName, string value)
@@ -138,18 +105,43 @@ namespace ChildTweaks
       return false;
     }
 
-    // self is just for being able to call self.OnEnter() inside hooks.
-    private static void BaseStateOnEnterCaller(BaseState self)
+    private void CreateSkill()
     {
+      skillDef.skillName = "ChildBlink";
+      (skillDef as ScriptableObject).name = "ChildBlink";
 
-    }
+      skillDef.activationState = new SerializableEntityStateType(typeof(ChildBlink));
+      skillDef.activationStateMachineName = "Body";
+      skillDef.interruptPriority = InterruptPriority.Frozen;
 
-    // self is just for being able to call self.OnEnter() inside hooks.
-    private static void BaseStateOnEnterCallerMethodModifier(ILContext il)
-    {
-      var cursor = new ILCursor(il);
-      cursor.Emit(OpCodes.Ldarg_0);
-      cursor.Emit(OpCodes.Call, typeof(BaseState).GetMethod(nameof(BaseState.OnEnter), allFlags));
+      skillDef.baseMaxStock = 1;
+      skillDef.baseRechargeInterval = 8f;
+
+      skillDef.rechargeStock = 1;
+      skillDef.requiredStock = 1;
+      skillDef.stockToConsume = 1;
+
+      skillDef.dontAllowPastMaxStocks = true;
+      skillDef.beginSkillCooldownOnSkillEnd = false;
+      skillDef.canceledFromSprinting = false;
+      skillDef.forceSprintDuringState = true;
+      skillDef.fullRestockOnAssign = true;
+      skillDef.resetCooldownTimerOnUse = true;
+      skillDef.isCombatSkill = false;
+      skillDef.mustKeyPress = false;
+      skillDef.cancelSprintingOnActivation = false;
+
+      SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
+      (newFamily as ScriptableObject).name = "ChildSecondaryAltFamily";
+      ;
+      newFamily.variants = new SkillFamily.Variant[1] { new SkillFamily.Variant { skillDef = skillDef } };
+
+      GenericSkill skill = childBody.AddComponent<GenericSkill>();
+      skill._skillFamily = newFamily;
+      childBody.GetComponent<SkillLocator>().secondary = skill;
+
+      ContentAddition.AddSkillFamily(newFamily);
+      ContentAddition.AddSkillDef(skillDef);
     }
   }
 }
