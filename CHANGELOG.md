@@ -1,3 +1,8 @@
+**1.1.2**
+
+- Fixes freeze and other hurt states not being applied
+- Increases minimum projectile activation distance slightly (15 -> 20)
+
 **1.1.1**
 
 - Increases credit cost 20 -> 25

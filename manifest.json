@@ -1,7 +1,7 @@
 ﻿{
 	"name": "ChildTweaks",
-	"version_number": "1.1.1",
-	"website_url": "",
+	"version_number": "1.1.2",
+	"website_url": "https://github.com/Nuxlar/ChildTweaks/issues",
 	"description": "Tweaks to the Child Enemy",
 	"dependencies": [
 		"RiskofThunder-R2API_ContentManagement-1.0.9",

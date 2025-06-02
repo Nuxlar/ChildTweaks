@@ -17,7 +17,7 @@ namespace ChildTweaks
     public const string PluginGUID = PluginAuthor + "." + PluginName;
     public const string PluginAuthor = "Nuxlar";
     public const string PluginName = "ChildTweaks";
-    public const string PluginVersion = "1.1.1";
+    public const string PluginVersion = "1.1.2";
 
     internal static Main Instance { get; private set; }
     public static string PluginDirectory { get; private set; }
@@ -57,7 +57,7 @@ namespace ChildTweaks
       projectileSimple.enableVelocityOverLifetime = false;
 
       GameObject.Destroy(childBody.GetComponent<ChildMonsterController>());
-      GameObject.Destroy(childBody.GetComponent<SetStateOnHurt>());
+      childBody.GetComponent<SetStateOnHurt>().hurtState = new SerializableEntityStateType(typeof(HurtState));
 
       spawnCard.directorCreditCost = 25; // 35
 
@@ -78,7 +78,7 @@ namespace ChildTweaks
         if (skillDriver.customName == "FireSparkBall")
         {
           skillDriver.maxDistance = 45; // 37 orig
-          skillDriver.minDistance = 15f; // 25 orig
+          skillDriver.minDistance = 20f; // 25 orig
         }
         if (skillDriver.customName == "PathFromAfar")
         {

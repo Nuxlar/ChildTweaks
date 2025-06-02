@@ -15,7 +15,7 @@
 - Spark Ball now has custom flight SFX for better sound cues
 - Reduced Spark Ball spawn distance (spawns closer to Child to prevent unfair hits)
 - Increased Spark Ball max activation distance 37 -> 45 (now activates ability farther away)
-- Decresed Spark Ball min activation distance 25 -> 15 (now activates ability closer to prevent constant running away)
+- Decresed Spark Ball min activation distance 25 -> 20 (now activates ability closer to prevent constant running away)
 
 <img src="https://s14.gifyu.com/images/bxwJK.gif" width="600" height="300" />
 
