@@ -17,7 +17,7 @@ namespace ChildTweaks
     public const string PluginGUID = PluginAuthor + "." + PluginName;
     public const string PluginAuthor = "Nuxlar";
     public const string PluginName = "ChildTweaks";
-    public const string PluginVersion = "1.1.0";
+    public const string PluginVersion = "1.1.1";
 
     internal static Main Instance { get; private set; }
     public static string PluginDirectory { get; private set; }
@@ -59,7 +59,7 @@ namespace ChildTweaks
       GameObject.Destroy(childBody.GetComponent<ChildMonsterController>());
       GameObject.Destroy(childBody.GetComponent<SetStateOnHurt>());
 
-      spawnCard.directorCreditCost = 20; // 35
+      spawnCard.directorCreditCost = 25; // 35
 
       AISkillDriver[] skillDrivers = childMaster.GetComponents<AISkillDriver>();
       foreach (AISkillDriver skillDriver in skillDrivers)

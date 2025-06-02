@@ -1,3 +1,7 @@
+**1.1.1**
+
+- Increases credit cost 20 -> 25
+
 **1.1.0**
 
 - Reworks Frolic (teleport)
