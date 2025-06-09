@@ -23,7 +23,6 @@
 
 - Child spawn cost reduced 35 -> 25 (blind pests are 15 for reference)
 - Slight AI tweaks for more sprinting and navigation
-- Adds EnemyImportance as a dependency to prevent instances of Child blinking into walls or the floor
 
 ## Credits
 

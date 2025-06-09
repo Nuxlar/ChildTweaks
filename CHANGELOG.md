@@ -1,3 +1,8 @@
+**1.1.3**
+
+- Internal code changes for the Memory Optimization update
+- Removes EnemyImportance as dependency (since it's now vanilla)
+
 **1.1.2**
 
 - Fixes freeze and other hurt states not being applied
