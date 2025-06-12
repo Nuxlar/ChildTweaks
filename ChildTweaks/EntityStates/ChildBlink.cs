@@ -7,7 +7,7 @@ namespace ChildTweaks;
 public class ChildBlink : BaseState
 {
     public static GameObject blinkPrefab = Main.teleportVFX;
-    public float duration = 0.3f;
+    public float duration = 0.2f;
     public float speedCoefficient = 5f; //25
     public float destealthDuration = 0.5f;
     public Material destealtMat = Main.destealthMat;
@@ -23,7 +23,7 @@ public class ChildBlink : BaseState
     public override void OnEnter()
     {
         base.OnEnter();
-        this.PlayAnimation("Gesture, Override", "FrolicEnter", "FrolicEnter.playbackRate", 1f);
+        this.PlayAnimation("Gesture, Override", "FrolicEnter", "FrolicEnter.playbackRate", 0.5f);
         Util.PlaySound(this.beginSoundString, this.gameObject);
         this.modelTransform = this.GetModelTransform();
         if ((bool)this.modelTransform)

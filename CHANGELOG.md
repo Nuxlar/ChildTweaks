@@ -1,3 +1,12 @@
+**1.1.4**
+
+- Fixes projectile not remaining a constant size
+- Fixes blink being able to interrupt the projectile state
+- Fixes blink animation lingering too long after the blink
+- Reduces projectile speed (17 -> 15)
+- Shortens blink distance
+- Shortens blink cooldown
+
 **1.1.3**
 
 - Internal code changes for the Memory Optimization update

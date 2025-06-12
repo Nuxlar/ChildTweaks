@@ -9,6 +9,8 @@ using RoR2.Skills;
 using RoR2.Projectile;
 using RoR2.Audio;
 using RoR2.ContentManagement;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace ChildTweaks
 {
@@ -18,7 +20,7 @@ namespace ChildTweaks
     public const string PluginGUID = PluginAuthor + "." + PluginName;
     public const string PluginAuthor = "Nuxlar";
     public const string PluginName = "ChildTweaks";
-    public const string PluginVersion = "1.1.3";
+    public const string PluginVersion = "1.1.4";
 
     internal static Main Instance { get; private set; }
     public static string PluginDirectory { get; private set; }
@@ -55,10 +57,10 @@ namespace ChildTweaks
 
       skillDef.activationState = new SerializableEntityStateType(typeof(ChildBlink));
       skillDef.activationStateMachineName = "Body";
-      skillDef.interruptPriority = InterruptPriority.Frozen;
+      skillDef.interruptPriority = InterruptPriority.Skill;
 
       skillDef.baseMaxStock = 1;
-      skillDef.baseRechargeInterval = 8f;
+      skillDef.baseRechargeInterval = 4f;
 
       skillDef.rechargeStock = 1;
       skillDef.requiredStock = 1;
@@ -96,6 +98,7 @@ namespace ChildTweaks
         sparkProjectile.GetComponent<ProjectileController>().flightSoundLoop = lsdSparkProjectile;
         ProjectileSimple projectileSimple = sparkProjectile.GetComponent<ProjectileSimple>();
         projectileSimple.enableVelocityOverLifetime = false;
+        projectileSimple.desiredForwardSpeed = 14f;
       };
     }
 
@@ -106,10 +109,15 @@ namespace ChildTweaks
       {
         GameObject sparkProjectileGhost = x.Result;
         Transform scaler = sparkProjectileGhost.transform.GetChild(0);
-        Destroy(scaler.GetComponent<ObjectScaleCurve>());
-        Destroy(scaler.GetComponent<ObjectScaleCurve>());
-        Destroy(scaler.GetComponent<ObjectTransformCurve>());
+        List<ObjectScaleCurve> list = scaler.GetComponents<ObjectScaleCurve>().ToList();
+        foreach (ObjectScaleCurve curve in list)
+        {
+          GameObject.Destroy(curve);
+        }
+        GameObject.Destroy(scaler.GetComponent<ObjectTransformCurve>());
+        scaler.localScale = new Vector3(1.5f, 1.5f, 1.5f);
       };
+
     }
 
     private void TweakSpawnCard()
