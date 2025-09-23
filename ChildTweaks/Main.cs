@@ -1,211 +1,177 @@
 using BepInEx;
 using EntityStates;
+using R2API;
 using RoR2;
+using RoR2.Audio;
 using RoR2.CharacterAI;
+using RoR2.ContentManagement;
+using RoR2.Projectile;
+using RoR2.Skills;
+using RoR2BepInExPack.GameAssetPathsBetter;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using R2API;
-using RoR2.Skills;
-using RoR2.Projectile;
-using RoR2.Audio;
-using RoR2.ContentManagement;
-using System.Linq;
-using System.Collections.Generic;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
-namespace ChildTweaks
+namespace ChildTweaks;
+
+[BepInPlugin(PluginGUID, PluginAuthor, PluginVersion)]
+public class Main : BaseUnityPlugin
 {
-  [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-  public class Main : BaseUnityPlugin
+  public const string PluginGUID = "Nuxlar.ChildTweaks";
+  public const string PluginAuthor = "Nuxlar";
+  public const string PluginName = "ChildTweaks";
+  public const string PluginVersion = "1.2.1";
+  public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
+  public static GameObject teleportVFX;
+  public static Material destealthMat;
+  private SkillDef skillDef = ScriptableObject.CreateInstance<SkillDef>();
+  public static GameObject meleeEffectPrefab;
+
+  internal static Main Instance { get; private set; }
+
+  public static string PluginDirectory { get; private set; }
+
+  public void Awake()
   {
-    public const string PluginGUID = PluginAuthor + "." + PluginName;
-    public const string PluginAuthor = "Nuxlar";
-    public const string PluginName = "ChildTweaks";
-    public const string PluginVersion = "1.1.4";
+    Main.Instance = this;
 
-    internal static Main Instance { get; private set; }
-    public static string PluginDirectory { get; private set; }
-    public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
-    public static GameObject teleportVFX;
-    public static Material destealthMat;
-    private SkillDef skillDef = ScriptableObject.CreateInstance<SkillDef>();
-    public static GameObject meleeEffectPrefab;
+    Log.Init(this.Logger);
 
-    public void Awake()
+    this.lsdSparkProjectile.startSoundName = "Play_spark_projectile_loop";
+    this.lsdSparkProjectile.stopSoundName = "Stop_spark_projectile_loop";
+    this.LoadAssets();
+    this.TweakProjectile();
+    this.TweakProjectileGhost();
+    this.TweakSpawnCard();
+    this.TweakSkillDrivers();
+    this.TweakBody();
+    this.TweakEntityState();
+
+    ContentAddition.AddEntityState<ChildBlink>(out bool _);
+  }
+
+  private void CreateSkill(GameObject body)
+  {
+    this.skillDef.skillName = "ChildBlink";
+    this.skillDef.skillNameToken = "ChildBlink";
+    this.skillDef.activationState = new SerializableEntityStateType(typeof(ChildBlink));
+    this.skillDef.activationStateMachineName = "Body";
+    this.skillDef.interruptPriority = InterruptPriority.Skill;
+    this.skillDef.baseMaxStock = 1;
+    this.skillDef.baseRechargeInterval = 8f;
+    this.skillDef.rechargeStock = 1;
+    this.skillDef.requiredStock = 1;
+    this.skillDef.stockToConsume = 1;
+    this.skillDef.dontAllowPastMaxStocks = true;
+    this.skillDef.beginSkillCooldownOnSkillEnd = true;
+    this.skillDef.canceledFromSprinting = false;
+    this.skillDef.forceSprintDuringState = false;
+    this.skillDef.fullRestockOnAssign = true;
+    this.skillDef.resetCooldownTimerOnUse = true;
+    this.skillDef.isCombatSkill = false;
+    this.skillDef.mustKeyPress = false;
+    this.skillDef.cancelSprintingOnActivation = true;
+    SkillFamily instance = ScriptableObject.CreateInstance<SkillFamily>();
+    // instance.name = "ChildSecondaryAltFamily";
+    instance.variants = new SkillFamily.Variant[1]
     {
-      Instance = this;
+      new SkillFamily.Variant() { skillDef = this.skillDef }
+    };
+    GenericSkill genericSkill = body.AddComponent<GenericSkill>();
+    genericSkill._skillFamily = instance;
+    body.GetComponent<SkillLocator>().secondary = genericSkill;
+    ContentAddition.AddSkillFamily(instance);
+    ContentAddition.AddSkillDef(this.skillDef);
+  }
 
-      Log.Init(Logger);
-
-      lsdSparkProjectile.startSoundName = "Play_spark_projectile_loop";
-      lsdSparkProjectile.stopSoundName = "Stop_spark_projectile_loop";
-
-      LoadAssets();
-      TweakProjectile();
-      TweakProjectileGhost();
-      TweakSpawnCard();
-      TweakSkillDrivers();
-      TweakBody();
-      TweakEntityState();
-
-      ContentAddition.AddEntityState<ChildBlink>(out _);
-    }
-
-    private void CreateSkill(GameObject body)
+  private void TweakProjectile()
+  {
+    AssetAsyncReferenceManager<GameObject>.LoadAsset(new AssetReferenceT<GameObject>(RoR2_DLC2_Child.ChildTrackingSparkBall_prefab)).Completed += (Action<AsyncOperationHandle<GameObject>>)(x =>
     {
-      skillDef.skillName = "ChildBlink";
-      (skillDef as ScriptableObject).name = "ChildBlink";
+      GameObject result = x.Result;
+      result.GetComponent<ProjectileController>().flightSoundLoop = this.lsdSparkProjectile;
+      ProjectileSimple component = result.GetComponent<ProjectileSimple>();
+      component.enableVelocityOverLifetime = false;
+      component.desiredForwardSpeed = 18f;
+    });
+  }
 
-      skillDef.activationState = new SerializableEntityStateType(typeof(ChildBlink));
-      skillDef.activationStateMachineName = "Body";
-      skillDef.interruptPriority = InterruptPriority.Skill;
-
-      skillDef.baseMaxStock = 1;
-      skillDef.baseRechargeInterval = 4f;
-
-      skillDef.rechargeStock = 1;
-      skillDef.requiredStock = 1;
-      skillDef.stockToConsume = 1;
-
-      skillDef.dontAllowPastMaxStocks = true;
-      skillDef.beginSkillCooldownOnSkillEnd = false;
-      skillDef.canceledFromSprinting = false;
-      skillDef.forceSprintDuringState = true;
-      skillDef.fullRestockOnAssign = true;
-      skillDef.resetCooldownTimerOnUse = true;
-      skillDef.isCombatSkill = false;
-      skillDef.mustKeyPress = false;
-      skillDef.cancelSprintingOnActivation = false;
-
-      SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
-      (newFamily as ScriptableObject).name = "ChildSecondaryAltFamily";
-      ;
-      newFamily.variants = new SkillFamily.Variant[1] { new SkillFamily.Variant { skillDef = skillDef } };
-
-      GenericSkill skill = body.AddComponent<GenericSkill>();
-      skill._skillFamily = newFamily;
-      body.GetComponent<SkillLocator>().secondary = skill;
-
-      ContentAddition.AddSkillFamily(newFamily);
-      ContentAddition.AddSkillDef(skillDef);
-    }
-
-    private void TweakProjectile()
+  private void TweakProjectileGhost()
+  {
+    AssetAsyncReferenceManager<GameObject>.LoadAsset(new AssetReferenceT<GameObject>(RoR2_DLC2_Child.ChildTrackingSparkBallGhost_prefab)).Completed += (Action<AsyncOperationHandle<GameObject>>)(x =>
     {
-      AssetReferenceT<GameObject> projectileRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.ChildTrackingSparkBall_prefab);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(projectileRef).Completed += (x) =>
+      Transform child = x.Result.transform.GetChild(0);
+      foreach (UnityEngine.Object @object in ((IEnumerable<ObjectScaleCurve>)child.GetComponents<ObjectScaleCurve>()).ToList<ObjectScaleCurve>())
+        UnityEngine.Object.Destroy(@object);
+      UnityEngine.Object.Destroy(child.GetComponent<ObjectTransformCurve>());
+      child.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+    });
+  }
+
+  private void TweakSpawnCard()
+  {
+    AssetAsyncReferenceManager<SpawnCard>.LoadAsset(new AssetReferenceT<SpawnCard>(RoR2_DLC2_Child.cscChild_asset)).Completed += (Action<AsyncOperationHandle<SpawnCard>>)(x => x.Result.directorCreditCost = 25);
+  }
+
+  private void TweakBody()
+  {
+    AssetAsyncReferenceManager<GameObject>.LoadAsset(new AssetReferenceT<GameObject>(RoR2_DLC2_Child.ChildBody_prefab)).Completed += (Action<AsyncOperationHandle<GameObject>>)(x =>
+    {
+      GameObject result = x.Result;
+      result.transform.GetChild(0).GetChild(0).GetChild(1).GetChild(2).position = new Vector3(0.0f, 2f, 0.0f);
+      UnityEngine.Object.Destroy(result.GetComponent<ChildMonsterController>());
+      result.GetComponent<SetStateOnHurt>().hurtState = new SerializableEntityStateType(typeof(HurtState));
+      this.CreateSkill(result);
+    });
+  }
+
+  private void TweakSkillDrivers()
+  {
+    AssetAsyncReferenceManager<GameObject>.LoadAsset(new AssetReferenceT<GameObject>(RoR2_DLC2_Child.ChildMaster_prefab)).Completed += (Action<AsyncOperationHandle<GameObject>>)(x =>
+    {
+      foreach (AISkillDriver component in x.Result.GetComponents<AISkillDriver>())
       {
-        GameObject sparkProjectile = x.Result;
-        sparkProjectile.GetComponent<ProjectileController>().flightSoundLoop = lsdSparkProjectile;
-        ProjectileSimple projectileSimple = sparkProjectile.GetComponent<ProjectileSimple>();
-        projectileSimple.enableVelocityOverLifetime = false;
-        projectileSimple.desiredForwardSpeed = 14f;
-      };
-    }
-
-    private void TweakProjectileGhost()
-    {
-      AssetReferenceT<GameObject> ghostRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.ChildTrackingSparkBallGhost_prefab);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(ghostRef).Completed += (x) =>
-      {
-        GameObject sparkProjectileGhost = x.Result;
-        Transform scaler = sparkProjectileGhost.transform.GetChild(0);
-        List<ObjectScaleCurve> list = scaler.GetComponents<ObjectScaleCurve>().ToList();
-        foreach (ObjectScaleCurve curve in list)
+        if (component.customName == "Frolic")
+          component.requiredSkill = null;
+        if (component.customName == "RunAway")
+          component.maxDistance = 25f;
+        if (component.customName == "FireSparkBall")
         {
-          GameObject.Destroy(curve);
+          component.maxDistance = 40f;
+          component.minDistance = 20f;
         }
-        GameObject.Destroy(scaler.GetComponent<ObjectTransformCurve>());
-        scaler.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-      };
-
-    }
-
-    private void TweakSpawnCard()
-    {
-      AssetReferenceT<SpawnCard> cardRef = new AssetReferenceT<SpawnCard>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.cscChild_asset);
-      AssetAsyncReferenceManager<SpawnCard>.LoadAsset(cardRef).Completed += (x) =>
-      {
-        SpawnCard spawnCard = x.Result;
-        spawnCard.directorCreditCost = 25; // 35
-      };
-    }
-
-    private void TweakBody()
-    {
-      AssetReferenceT<GameObject> bodyRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.ChildBody_prefab);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(bodyRef).Completed += (x) =>
-      {
-        GameObject childBody = x.Result;
-        // Reduces projectile spawn point distance
-        childBody.transform.GetChild(0).GetChild(0).GetChild(1).GetChild(2).position = new Vector3(0, 2.5f, 0);
-
-        GameObject.Destroy(childBody.GetComponent<ChildMonsterController>());
-        childBody.GetComponent<SetStateOnHurt>().hurtState = new SerializableEntityStateType(typeof(HurtState));
-
-        CreateSkill(childBody);
-      };
-    }
-
-    private void TweakSkillDrivers()
-    {
-      AssetReferenceT<GameObject> masterRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.ChildMaster_prefab);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(masterRef).Completed += (x) =>
-      {
-        GameObject childMaster = x.Result;
-        AISkillDriver[] skillDrivers = childMaster.GetComponents<AISkillDriver>();
-        foreach (AISkillDriver skillDriver in skillDrivers)
+        if (component.customName == "PathFromAfar")
         {
-          if (skillDriver.customName == "Frolic")
-          {
-            skillDriver.movementType = AISkillDriver.MovementType.FleeMoveTarget;
-            skillDriver.aimType = AISkillDriver.AimType.MoveDirection;
-            skillDriver.shouldSprint = true;
-            skillDriver.requiredSkill = null;
-          }
-          if (skillDriver.customName == "RunAway")
-          {
-            skillDriver.maxDistance = 20f; // 30 orig
-          }
-          if (skillDriver.customName == "FireSparkBall")
-          {
-            skillDriver.maxDistance = 45; // 37 orig
-            skillDriver.minDistance = 20f; // 25 orig
-          }
-          if (skillDriver.customName == "PathFromAfar")
-          {
-            skillDriver.movementType = AISkillDriver.MovementType.ChaseMoveTarget;
-            skillDriver.minDistance = 25f; // 35 orig
-            skillDriver.shouldSprint = true;
-          }
+          component.movementType = AISkillDriver.MovementType.ChaseMoveTarget;
+          component.minDistance = 30f;
+          component.shouldSprint = true;
         }
-      };
-    }
+      }
+    });
+  }
 
-    private void TweakEntityState()
+  private void TweakEntityState()
+  {
+    AssetAsyncReferenceManager<EntityStateConfiguration>.LoadAsset(new AssetReferenceT<EntityStateConfiguration>(RoR2_DLC2_Child.EntityStates_ChildMonster_FireTrackingSparkBall_asset)).Completed += (Action<AsyncOperationHandle<EntityStateConfiguration>>)(x =>
     {
-      AssetReferenceT<EntityStateConfiguration> escRef = new AssetReferenceT<EntityStateConfiguration>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child_EntityStates_ChildMonster.FireTrackingSparkBall_asset);
-      AssetAsyncReferenceManager<EntityStateConfiguration>.LoadAsset(escRef).Completed += (x) =>
+      EntityStateConfiguration result = x.Result;
+      for (int index = 0; index < result.serializedFieldsCollection.serializedFields.Length; ++index)
       {
-        EntityStateConfiguration esc = x.Result;
-        for (int i = 0; i < esc.serializedFieldsCollection.serializedFields.Length; i++)
-        {
-          if (esc.serializedFieldsCollection.serializedFields[i].fieldName == "bombDamageCoefficient")
-          {
-            esc.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue = "2";  // orig 6
-          }
-        }
-      };
-    }
+        if (result.serializedFieldsCollection.serializedFields[index].fieldName == "bombDamageCoefficient")
+          result.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue = "3";
+      }
+    });
+  }
 
-    private void LoadAssets()
-    {
-      AssetReferenceT<GameObject> vfxRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.FrolicTeleportVFX_prefab);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(vfxRef).Completed += (x) => teleportVFX = x.Result;
-      AssetReferenceT<Material> matRef = new AssetReferenceT<Material>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Parent.matParentDissolve_mat);
-      AssetAsyncReferenceManager<Material>.LoadAsset(matRef).Completed += (x) => destealthMat = x.Result;
-      AssetReferenceT<GameObject> effectRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Child.MuzzleflashFrolic_prefab);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(effectRef).Completed += (x) => meleeEffectPrefab = x.Result;
-    }
-
+  private void LoadAssets()
+  {
+    AsyncOperationHandle<GameObject> asyncOperationHandle = AssetAsyncReferenceManager<GameObject>.LoadAsset(new AssetReferenceT<GameObject>(RoR2_DLC2_Child.FrolicTeleportVFX_prefab));
+    asyncOperationHandle.Completed += x => Main.teleportVFX = x.Result;
+    AssetAsyncReferenceManager<Material>.LoadAsset(new AssetReferenceT<Material>(RoR2_Base_Parent.matParentDissolve_mat)).Completed += x => Main.destealthMat = x.Result;
+    asyncOperationHandle = AssetAsyncReferenceManager<GameObject>.LoadAsset(new AssetReferenceT<GameObject>(RoR2_DLC2_Child.MuzzleflashFrolic_prefab));
+    asyncOperationHandle.Completed += x => Main.meleeEffectPrefab = x.Result;
   }
 }

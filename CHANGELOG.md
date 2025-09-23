@@ -1,3 +1,17 @@
+**1.2.1**
+
+- Reduces possible blink distance (20/35 -> 10/25)
+
+**1.2.0**
+
+- Reworked!
+- Changes blink from directional to an area around the child itself (vanilla is around the player)
+- Increased projectile speed (14 -> 18)
+- Increased projectile damage (200% -> 300%)
+- Increased blink cooldown (4s -> 8s)
+- Reduced height of projectile spawn point to be closer to the body 
+- Reduced max range to fire projectile (45 -> 40)
+
 **1.1.4**
 
 - Fixes projectile not remaining a constant size
