@@ -1,3 +1,11 @@
+**1.2.3**
+
+- Fixes multiplayer teleporting issues
+
+**1.2.2**
+
+- Removes credit cost reduction (should spawn less)
+
 **1.2.1**
 
 - Reduces possible blink distance (20/35 -> 10/25)

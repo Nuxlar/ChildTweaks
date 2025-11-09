@@ -23,7 +23,7 @@ public class Main : BaseUnityPlugin
   public const string PluginGUID = "Nuxlar.ChildTweaks";
   public const string PluginAuthor = "Nuxlar";
   public const string PluginName = "ChildTweaks";
-  public const string PluginVersion = "1.2.1";
+  public const string PluginVersion = "1.2.3";
   public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
   public static GameObject teleportVFX;
   public static Material destealthMat;
@@ -45,7 +45,6 @@ public class Main : BaseUnityPlugin
     this.LoadAssets();
     this.TweakProjectile();
     this.TweakProjectileGhost();
-    this.TweakSpawnCard();
     this.TweakSkillDrivers();
     this.TweakBody();
     this.TweakEntityState();
@@ -109,11 +108,6 @@ public class Main : BaseUnityPlugin
       UnityEngine.Object.Destroy(child.GetComponent<ObjectTransformCurve>());
       child.localScale = new Vector3(1.5f, 1.5f, 1.5f);
     });
-  }
-
-  private void TweakSpawnCard()
-  {
-    AssetAsyncReferenceManager<SpawnCard>.LoadAsset(new AssetReferenceT<SpawnCard>(RoR2_DLC2_Child.cscChild_asset)).Completed += (Action<AsyncOperationHandle<SpawnCard>>)(x => x.Result.directorCreditCost = 25);
   }
 
   private void TweakBody()

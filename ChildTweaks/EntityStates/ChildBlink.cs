@@ -61,7 +61,7 @@ public class ChildBlink : BaseState
             this.tpFired = true;
             this.TeleportAway();
         }
-        if ((double)this.fixedAge <= (double)this.fireFrolicDuration || this.frolicFireFired)
+        if ((double)this.fixedAge <= (double)this.fireFrolicDuration || this.frolicFireFired || !this.isAuthority)
             return;
         Util.PlaySound(this.endSoundString, this.gameObject);
         this.FireTPEffect();
@@ -91,8 +91,10 @@ public class ChildBlink : BaseState
             --this.hurtboxGroup.hurtBoxesDeactivatorCounter;
         if ((bool)this.characterMotor)
             this.characterMotor.disableAirControlUntilCollision = false;
-        this.characterBody.transform.LookAt(this.characterBody.master.GetComponent<BaseAI>().currentEnemy.characterBody.transform.position);
         base.OnExit();
+        if (!this.isAuthority)
+            return;
+        this.characterBody.transform.LookAt(this.characterBody.master.GetComponent<BaseAI>().currentEnemy.characterBody.transform.position);
     }
 
     public void TeleportAway()

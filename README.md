@@ -9,7 +9,7 @@
 
 ## Tweaks Spark Ball (projectile)
 
-- Spark Ball damage is reduced 600% -> 200%
+- Spark Ball damage is reduced 600% -> 300%
 - Spark Ball no longer grows visually, size remains consistent
 - Spark Ball no longer slows down, speed remains consistent
 - Spark Ball now has custom flight SFX for better sound cues
@@ -21,7 +21,6 @@
 
 ## General Tweaks
 
-- Child spawn cost reduced 35 -> 25 (blind pests are 15 for reference)
 - Slight AI tweaks for more sprinting and navigation
 
 ## Credits
