@@ -1,3 +1,8 @@
+**1.2.4**
+
+- Updated packages for latest patch
+- Fixed the silent projectile (forgor the soundbank)
+
 **1.2.3**
 
 - Fixes multiplayer teleporting issues

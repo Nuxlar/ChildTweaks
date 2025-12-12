@@ -23,7 +23,7 @@ public class Main : BaseUnityPlugin
   public const string PluginGUID = "Nuxlar.ChildTweaks";
   public const string PluginAuthor = "Nuxlar";
   public const string PluginName = "ChildTweaks";
-  public const string PluginVersion = "1.2.3";
+  public const string PluginVersion = "1.2.4";
   public LoopSoundDef lsdSparkProjectile = ScriptableObject.CreateInstance<LoopSoundDef>();
   public static GameObject teleportVFX;
   public static Material destealthMat;
