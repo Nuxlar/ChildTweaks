@@ -106,17 +106,24 @@ public class ChildBlink : BaseState
         Vector3 position = new Vector3();
         bool flag = false;
         int num1 = 35;
+        if (nodesInRange.Count == 0)
+        {
+            Debug.LogWarning("Child.ChildBlink found no nodes in range - teleporting to current position");
+            return;
+        }
         while (!flag)
         {
-            NodeGraph.NodeIndex nodeIndex = nodesInRange.ElementAt<NodeGraph.NodeIndex>(Random.Range(1, nodesInRange.Count));
+            NodeGraph.NodeIndex nodeIndex = nodesInRange.ElementAt<NodeGraph.NodeIndex>(Random.Range(0, nodesInRange.Count));
             nodeGraph.GetNodePosition(nodeIndex, out position);
             double num2 = (double)Vector3.Distance(this.characterBody.coreTransform.position, position);
             --num1;
             if (num2 > 35.0 || num1 < 0)
                 flag = true;
         }
+        /*
         if (num1 < 0)
             Debug.LogWarning("Child.ChildBlink state entered a loop where it ran more than 35 times without getting out - check what it's doing");
+      */
         TeleportHelper.TeleportBody(this.characterBody, position + Vector3.up * 1.5f, false);
     }
 }

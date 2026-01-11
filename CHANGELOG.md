@@ -1,3 +1,7 @@
+**1.2.5**
+
+- Fixes console spam
+
 **1.2.4**
 
 - Updated packages for latest patch
